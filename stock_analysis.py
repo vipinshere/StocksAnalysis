@@ -52,12 +52,18 @@ def calculate_exponential_moving_average(simple_moving_average, price_list):
     return exponential_moving_average
 
 
-def calculate_bollinger_bands(price_list):
-    standard_deviation = calculate_sd(price_list)
-    simple_moving_average = calculate_simple_moving_average(price_list)
-    upper_band = simple_moving_average + (standard_deviation * 2)
-    lower_band = simple_moving_average - (standard_deviation * 2)
-    return {'upper': round(upper_band, 2), 'lower': round(lower_band, 2)}
+def calculateMACD(price_list):
+    twelve_day_price_list = price_list[-12:]
+    twenty_six_day_price_list = price_list[-26:]
+    twelve_day_sma = calculate_simple_moving_average(twelve_day_price_list)
+    twelve_day_ema = calculate_exponential_moving_average(twelve_day_sma, twelve_day_price_list)
+    twenty_six_day_sma = calculate_simple_moving_average(twenty_six_day_price_list)
+    twenty_six_day_ema = calculate_exponential_moving_average(twenty_six_day_sma, twenty_six_day_price_list)
+    macd = twenty_six_day_ema - twelve_day_ema
+    if macd > 0:
+        print("MACD is positive. Good")
+    else:
+        print("MACD is negative. Not good")
 
 
 def stock_analysis():
@@ -83,15 +89,12 @@ def stock_analysis():
     simple_moving_average = calculate_simple_moving_average(price_list)
     # calculate simple_moving_average
     exponential_moving_average = calculate_exponential_moving_average(simple_moving_average, price_list)
-
-    print(simple_moving_average)
-    print(exponential_moving_average)
-
-    bollinger_bands = calculate_bollinger_bands(price_list)
-    if bollinger_bands['upper'] - last_closing_price > last_closing_price - bollinger_bands['upper']:
-        print("short " + stock + " because last closing price is closer to upper bollinger band")
+    if exponential_moving_average < last_closing_price:
+        print("EMA {} is lower than last closing price {} - Good".format(exponential_moving_average, last_closing_price))
     else:
-        print("buy " + stock + " because last closing price is closer to lower bollinger band")
+        print("EMA {} is higher than last closing price {} - Not good".format(exponential_moving_average, last_closing_price))
+
+    calculateMACD(price_list)
 
 
 stock_analysis()
