@@ -1,8 +1,7 @@
 from datetime import timedelta
 import statistics
 from service.stock_apis import get_equity_history as fetch_history
-
-SIMPLE_MOVING_AVERAGE_TIME_PERIOD = 50
+from constants.constants import SIMPLE_MOVING_AVERAGE_TIME_PERIOD, RELATIVE_STRENGTH_INDEX, RELATIVE_STRENGTH_INDEX_TIME_PERIOD
 
 
 def calculate_average(lst):
@@ -26,7 +25,7 @@ def equity_history(stock, past_date, today):
     return history
 
 
-def price_list_from_history(history):
+def closing_price_list_from_history(history):
     price_list = history['CH_CLOSING_PRICE'].to_list()
     return price_list
 
@@ -34,3 +33,11 @@ def price_list_from_history(history):
 def get_last_closing_price(price_list):
     last_closing_price = price_list[-1]
     return last_closing_price
+
+
+def get_data_from_history(history, column, time_period):
+    if time_period == RELATIVE_STRENGTH_INDEX:
+        return history[column].to_list()[-(RELATIVE_STRENGTH_INDEX_TIME_PERIOD + 1):]
+    else:
+        return None
+

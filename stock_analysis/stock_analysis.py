@@ -1,5 +1,6 @@
 from datetime import date
 from utilities.utilities import *
+from constants.constants import CLOSING_PRICE, RELATIVE_STRENGTH_INDEX
 
 
 def calculate_simple_moving_average(price_list):
@@ -35,6 +36,47 @@ def calculate_percentage_return(history):
     return round(percentage_return, 2)
 
 
+def calculate_bollinger_bands(price_list):
+    standard_deviation = calculate_sd(price_list)
+    simple_moving_average = calculate_simple_moving_average(price_list)
+    upper_band = simple_moving_average + (standard_deviation * 2)
+    lower_band = simple_moving_average - (standard_deviation * 2)
+    return {'upper': round(upper_band, 2), 'lower': round(lower_band, 2)}
+
+
+def calculate_rsi(history):
+    rsi_historical_data = get_data_from_history(history, CLOSING_PRICE, RELATIVE_STRENGTH_INDEX)
+    up_closing_prices_list = []
+    down_closing_prices_list = []
+    for index, data in enumerate(rsi_historical_data):
+        if index == 0:
+            continue
+        else:
+            close_price = data
+            previous_close_price = rsi_historical_data[index - 1]
+            if close_price > previous_close_price:
+                up_closing_prices_list.append(round(close_price - previous_close_price, 2))
+                down_closing_prices_list.append(0)
+            else:
+                down_closing_prices_list.append(round(previous_close_price - close_price, 2))
+                up_closing_prices_list.append(0)
+    sma_up = statistics.mean(up_closing_prices_list)
+    sma_down = statistics.mean(down_closing_prices_list)
+    smoothened_up_closing_prices_list = []
+    smoothened_down_closing_prices_list = []
+    for up in up_closing_prices_list:
+        smoothened_up_closing_prices_list.append(((1 / RELATIVE_STRENGTH_INDEX_TIME_PERIOD) * up) +
+                                                 ((13 / 14) * sma_up))
+    for down in down_closing_prices_list:
+        smoothened_down_closing_prices_list.append(((1 / RELATIVE_STRENGTH_INDEX_TIME_PERIOD) * down) +
+                                                   ((13 / 14) * sma_down))
+    average_up_price_change = statistics.mean(smoothened_up_closing_prices_list)
+    average_down_price_change = statistics.mean(smoothened_down_closing_prices_list)
+    relative_strength = average_up_price_change / average_down_price_change
+    relative_strength_index = round(100 - (100 / (1 + relative_strength)), 2)
+    return relative_strength_index
+
+
 def stock_analysis():
     stock = "TATAMOTORS"
     # get today's date and past date for which the simple moving average is calculated
@@ -50,7 +92,7 @@ def stock_analysis():
     # sort the history per the timestamp
     history = history.sort_values(by=['CH_TIMESTAMP'], ascending=True)
     # get price list from history
-    price_list = price_list_from_history(history)
+    price_list = closing_price_list_from_history(history)
     last_closing_price = get_last_closing_price(price_list)
 
     # calculate simple_moving_average
@@ -68,8 +110,19 @@ def stock_analysis():
     else:
         print("MACD is negative. Not good")
 
+    # calculate bollinger bands
+    bollinger_bands = calculate_bollinger_bands(price_list)
+    if bollinger_bands['upper'] - last_closing_price > last_closing_price - bollinger_bands['upper']:
+        print("short {} because last closing price is closer to upper bollinger band".format(stock))
+    else:
+        print("buy {} because last closing price is closer to lower bollinger band".format(stock))
+
+    # calculate percentage change between last closing price and closing price from the first date in history
     percentage_return = calculate_percentage_return(history)
     print(percentage_return)
+
+    # calculate Relative Strength Index (RSI)
+    rsi = calculate_rsi(history)
 
 
 stock_analysis()
