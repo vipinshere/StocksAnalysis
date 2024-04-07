@@ -1,6 +1,7 @@
 from datetime import date
 from utilities.utilities import *
 from constants.constants import CLOSING_PRICE, RELATIVE_STRENGTH_INDEX
+from utilities.export import export_data
 
 
 def calculate_simple_moving_average(price_list):
@@ -99,30 +100,19 @@ def stock_analysis():
     simple_moving_average = calculate_simple_moving_average(price_list)
     # calculate simple_moving_average
     exponential_moving_average = calculate_exponential_moving_average(simple_moving_average, price_list)
-    if exponential_moving_average < last_closing_price:
-        print("EMA {} is lower than LCP {} - Good".format(exponential_moving_average, last_closing_price))
-    else:
-        print("EMA {} is higher than LCP {} - Not good".format(exponential_moving_average, last_closing_price))
     # Calculate Moving Average Convergence & Divergence
     macd = calculate_macd(price_list)
-    if macd > 0:
-        print("MACD is positive. Good")
-    else:
-        print("MACD is negative. Not good")
 
     # calculate bollinger bands
     bollinger_bands = calculate_bollinger_bands(price_list)
-    if bollinger_bands['upper'] - last_closing_price > last_closing_price - bollinger_bands['upper']:
-        print("short {} because last closing price is closer to upper bollinger band".format(stock))
-    else:
-        print("buy {} because last closing price is closer to lower bollinger band".format(stock))
 
     # calculate percentage change between last closing price and closing price from the first date in history
     percentage_return = calculate_percentage_return(history)
-    print(percentage_return)
 
     # calculate Relative Strength Index (RSI)
     rsi = calculate_rsi(history)
+    export_data(build_data(stock, last_closing_price, exponential_moving_average, bollinger_bands, percentage_return,
+                           rsi))
 
 
 stock_analysis()
